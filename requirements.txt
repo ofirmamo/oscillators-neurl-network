@@ -1,0 +1,5 @@
+pyseagull==1.0.0b4
+matplotlib==3.5.1
+jinja2==3.0.3
+numpy==1.21.5
+sympy==1.9
