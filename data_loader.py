@@ -1,5 +1,3 @@
-import sys
-
 import lifeforms_gen.rle_decoder as decoder
 from utilities.constants import *
 from utilities.paths import *
@@ -19,14 +17,19 @@ class DataLoader:
     INPUT_NON_OSCILLATOR_FILES = [os.path.join(NON_OSCILLATORS_PATH, file_name) for file_name in
                                   os.listdir(NON_OSCILLATORS_PATH)]
 
-    def __init__(self, lf_type=OSCILLATORS):
+    def __init__(self):
         self.idx = 0
-        self.batch_size = 1
-        self.expected_value = 1 if lf_type == OSCILLATORS else 0
-        self.input_list = self.INPUT_OSCILLATOR_FILES if lf_type == OSCILLATORS else self.INPUT_NON_OSCILLATOR_FILES
-        self.learning_samples = []
-        for file_path in self.input_list:
-            self.learning_samples += self.load_inputs(file_path)
+        self.learning_samples_with_expected = []
+
+        for file_path in self.INPUT_OSCILLATOR_FILES:
+            self.learning_samples_with_expected += [(loaded_input, np.ones((1,))) for loaded_input in
+                                                    self.load_inputs(file_path)]
+
+        for file_path in self.INPUT_NON_OSCILLATOR_FILES:
+            self.learning_samples_with_expected += [(loaded_input, np.zeros((1,))) for loaded_input in
+                                                    self.load_inputs(file_path)]
+
+        self.batch_size = len(self.learning_samples_with_expected)
 
     def load_inputs(self, file_path):
         with open(file_path) as file:
@@ -65,14 +68,22 @@ class DataLoader:
         return self
 
     def __next__(self):
-        if self.idx >= len(self.learning_samples):
+        if self.idx >= len(self.learning_samples_with_expected):
             self.idx = 0
             raise StopIteration()
 
         temp = self.idx
         self.idx += self.batch_size
 
-        return self.learning_samples[temp:min(len(self.learning_samples), self.idx + self.batch_size)]
+        # returns list of [all_samples, all_expected] as: [(sample1, sample2...), (1, 0, ...)]
+        results = list(
+            zip(*self.learning_samples_with_expected[temp:min(len(self.learning_samples_with_expected), self.idx)]))
+        results[0] = np.stack(results[0])
+        results[1] = np.asarray(results[1])
+        return results
 
     def get_samples_with_expected_result(self):
-        return self.learning_samples, np.full(len(self.learning_samples), self.expected_value)
+        results = list(zip(*self.learning_samples_with_expected))
+        results[0] = np.stack(results[0])
+        results[1] = np.asarray(results[1])
+        return results

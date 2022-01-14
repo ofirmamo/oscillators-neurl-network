@@ -1,6 +1,5 @@
 import matplotlib.pyplot as plt
 import seagull as sg
-import os
 from seagull import lifeforms as lf
 
 from lifeforms_gen import rle_decoder as decoder
