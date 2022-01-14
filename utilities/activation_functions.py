@@ -1,5 +1,3 @@
-import math
-
 import numpy as np
 
 FUNC = "f"
@@ -14,7 +12,7 @@ LEAKY_RELU = "leaky_relu"
 
 
 def sigmoid(x):
-    return 1 / (1 + math.exp(-x))
+    return 1 / (1 + np.exp(-x))
 
 
 def _derivative_binary_step(x):
@@ -52,8 +50,8 @@ FUNCTIONS = {
         },
     SOFTPLUS:
         {
-            FUNC: lambda x: math.log(1 + math.exp(x)),
-            DERIVATIVE: lambda x: 1 / (1 + math.exp(-x))
+            FUNC: lambda x: np.log(1 + np.exp(x)),
+            DERIVATIVE: lambda x: 1 / (1 + np.exp(-x))
         },
     LEAKY_RELU:
         {

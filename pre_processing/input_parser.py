@@ -5,8 +5,37 @@ import numpy as np
 import lifeforms_gen.rle_decoder as decoder
 
 
+def trim_zeros(arr):
+    """Returns a trimmed view of an n-D array excluding any outer
+    regions which contain only zeros.
+    """
+    slices = tuple(slice(idx.min(), idx.max() + 1) for idx in np.nonzero(arr))
+    return arr[slices]
 
+PNGS_FILE = "pngs.json"
+SOURCES_FOLDER = os.path.join("..","data-sources", "rle")
+OSCILLATORS_FOLDER = os.path.join("..","data-sources", "oscillators")
+NON_OSCILLATORS_FOLDER = os.path.join("..","data-sources", "non_oscillators")
 
+relevant_file_names = []
+for file_name in os.listdir(SOURCES_FOLDER):
+    with open(os.path.join(SOURCES_FOLDER, file_name)) as file:
+        raw_content = file.read()
+        header = decoder.decode_header(raw_content)
+        if header.height <= 32 and header.width <= 32:
+            relevant_file_names.append(file_name)
+            continue
+        matrix = decoder.decode(raw_content)
+
+        failed = 0
+        try:
+            matrix_trimmed = np.asmatrix(trim_zeros(matrix))
+            shape = matrix_trimmed.shape
+            if shape[0] <= 32 and shape[1] <= 32:
+                relevant_file_names.append(file_name)
+        except:
+            failed += 1
+            pass
 
 print(len(relevant_file_names))
 

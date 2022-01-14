@@ -1,3 +1,5 @@
+import sys
+
 import lifeforms_gen.rle_decoder as decoder
 from utilities.constants import *
 from utilities.paths import *
@@ -16,10 +18,11 @@ class DataLoader:
     INPUT_OSCILLATOR_FILES = [os.path.join(OSCILLATORS_PATH, file_name) for file_name in os.listdir(OSCILLATORS_PATH)]
     INPUT_NON_OSCILLATOR_FILES = [os.path.join(NON_OSCILLATORS_PATH, file_name) for file_name in
                                   os.listdir(NON_OSCILLATORS_PATH)]
-    BATCH_SIZE = 1
 
     def __init__(self, lf_type=OSCILLATORS):
         self.idx = 0
+        self.batch_size = 1
+        self.expected_value = 1 if lf_type == OSCILLATORS else 0
         self.input_list = self.INPUT_OSCILLATOR_FILES if lf_type == OSCILLATORS else self.INPUT_NON_OSCILLATOR_FILES
         self.learning_samples = []
         for file_path in self.input_list:
@@ -31,17 +34,20 @@ class DataLoader:
             lifeform_matrix = decoder.decode(raw_content)
 
             trimmed_lifeform_matrix = trim_zeros(lifeform_matrix)
-            lifeform_matrix_augmentations_uniq = self.augment_matrix(trimmed_lifeform_matrix)
-            lifeform_padded_matrix_augmentations = [self.pad_matrix(matrix) for matrix in
-                                                    lifeform_matrix_augmentations_uniq]
+            # lifeform_matrix_augmentations_uniq = self.augment_matrix(trimmed_lifeform_matrix)
+            # lifeform_padded_matrix_augmentations = [self.pad_matrix(matrix) for matrix in
+            #                                        lifeform_matrix_augmentations_uniq]
+            # TODO - Replace Man
+            lifeform_padded_matrix = [self.pad_matrix(matrix) for matrix in
+                                      [trimmed_lifeform_matrix]]
             filtered = []
-            for augmentation in lifeform_padded_matrix_augmentations:
+            for augmentation in lifeform_padded_matrix:
                 if any(np.array_equal(matrix, augmentation) for matrix in filtered):
                     continue
                 filtered.append(augmentation)
 
             lifeform_flattened_augmentations = [self.flatten_matrix(matrix) for matrix in
-                                                lifeform_padded_matrix_augmentations]
+                                                lifeform_padded_matrix]
 
             return lifeform_flattened_augmentations
 
@@ -63,7 +69,10 @@ class DataLoader:
             self.idx = 0
             raise StopIteration()
 
-        next_batch = self.learning_samples[self.idx:max(len(self.learning_samples), self.idx + self.BATCH_SIZE)]
-        self.idx += self.BATCH_SIZE
+        temp = self.idx
+        self.idx += self.batch_size
 
-        return next_batch
+        return self.learning_samples[temp:min(len(self.learning_samples), self.idx + self.batch_size)]
+
+    def get_samples_with_expected_result(self):
+        return self.learning_samples, np.full(len(self.learning_samples), self.expected_value)
