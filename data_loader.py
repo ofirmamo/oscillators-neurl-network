@@ -1,10 +1,11 @@
+import random
+
 import lifeforms_gen.rle_decoder as decoder
 from utilities.constants import *
 from utilities.paths import *
 from utilities.utilities import *
 
 
-# noinspection PyMethodMayBeStatic
 class DataLoader:
     """
     1. Load + Parse Data
@@ -19,17 +20,61 @@ class DataLoader:
 
     def __init__(self):
         self.idx = 0
-        self.learning_samples_with_expected = []
+        self.oscillators_learning_samples_with_expected = []
+        self.non_oscillators_learning_samples_with_expected = []
 
         for file_path in self.INPUT_OSCILLATOR_FILES:
-            self.learning_samples_with_expected += [(loaded_input, np.ones((1,))) for loaded_input in
-                                                    self.load_inputs(file_path)]
+            self.oscillators_learning_samples_with_expected += [(file_path, loaded_input, np.ones((1,))) for loaded_input in
+                                                                self.load_inputs(file_path)]
 
         for file_path in self.INPUT_NON_OSCILLATOR_FILES:
-            self.learning_samples_with_expected += [(loaded_input, np.zeros((1,))) for loaded_input in
-                                                    self.load_inputs(file_path)]
+            self.non_oscillators_learning_samples_with_expected += [(file_path, loaded_input, np.zeros((1,))) for loaded_input in
+                                                                    self.load_inputs(file_path)]
 
-        self.batch_size = len(self.learning_samples_with_expected)
+        self.mode = TRAIN_MODE
+
+        def train_test_split():
+            random.seed(RANDOM_SEED)
+
+            pick_percent = lambda working_set: set(random.sample(list(range(len(working_set))),
+                                                                 int(len(working_set) * 0.7)))
+            pick_rest = lambda origin, picked: set(range(len(origin))) - picked
+
+            oscillators_train_set_ids = pick_percent(self.oscillators_learning_samples_with_expected)
+            nonoscillators_train_set_ids = pick_percent(self.non_oscillators_learning_samples_with_expected)
+
+            oscillators_test_set_ids = pick_rest(self.oscillators_learning_samples_with_expected,
+                                                 oscillators_train_set_ids)
+            nonoscillators_test_set_ids = pick_rest(self.non_oscillators_learning_samples_with_expected,
+                                                    nonoscillators_train_set_ids)
+
+            train_set = [lst[idx] for indices, lst in
+                         [(oscillators_train_set_ids, self.oscillators_learning_samples_with_expected),
+                          (nonoscillators_train_set_ids, self.non_oscillators_learning_samples_with_expected)] for idx
+                         in indices]
+            test_set = [lst[idx] for indices, lst in
+                        [(oscillators_test_set_ids, self.oscillators_learning_samples_with_expected),
+                         (nonoscillators_test_set_ids, self.non_oscillators_learning_samples_with_expected)] for idx in
+                        indices]
+            random.shuffle(train_set)
+            random.shuffle(test_set)
+
+            return train_set, test_set
+
+        self.train_set, self.test_set = train_test_split()
+
+        self.working_set = self.train_set
+
+        self.batch_size = len(self.working_set)
+
+    def change_mode(self, mode):
+        self.mode = mode
+        self.working_set = self.train_set if mode == TRAIN_MODE else self.test_set
+        self.batch_size = len(self.working_set)
+        self.idx = 0
+
+    def __len__(self, mode=None):
+        return len(self.working_set) if not mode else len(self.train_set) if mode == TRAIN_MODE else len(self.test_set)
 
     def load_inputs(self, file_path):
         with open(file_path) as file:
@@ -68,7 +113,7 @@ class DataLoader:
         return self
 
     def __next__(self):
-        if self.idx >= len(self.learning_samples_with_expected):
+        if self.idx >= len(self.working_set):
             self.idx = 0
             raise StopIteration()
 
@@ -76,14 +121,10 @@ class DataLoader:
         self.idx += self.batch_size
 
         # returns list of [all_samples, all_expected] as: [(sample1, sample2...), (1, 0, ...)]
-        results = list(
-            zip(*self.learning_samples_with_expected[temp:min(len(self.learning_samples_with_expected), self.idx)]))
-        results[0] = np.stack(results[0])
-        results[1] = np.asarray(results[1])
-        return results
+        return self.get_samples_with_expected_result(self.working_set[temp:min(len(self.working_set), self.idx)])
 
-    def get_samples_with_expected_result(self):
-        results = list(zip(*self.learning_samples_with_expected))
-        results[0] = np.stack(results[0])
-        results[1] = np.asarray(results[1])
+    def get_samples_with_expected_result(self, working_set=None):
+        results = list(zip(*(working_set or self.working_set)))
+        results[1] = np.stack(results[1])
+        results[2] = np.asarray(results[2])
         return results
