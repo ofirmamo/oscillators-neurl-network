@@ -48,7 +48,7 @@ for file, sample, expected in zip(files, samples, expected):
     prediction = neural_network.predict_samples((sample, expected), synapse0, synapse1)
     if prediction[0][0] >= OSCILLATOR_PREDICTION_THRESHOLD and expected[0] == 0.0:
         train_failures.append((file, expected[0]))
-    if prediction[0][0] < 100 - OSCILLATOR_PREDICTION_THRESHOLD and expected[0] == 1.0:
+    if prediction[0][0] <= 1 - OSCILLATOR_PREDICTION_THRESHOLD and expected[0] == 1.0:
         train_failures.append((file, expected[0]))
 
 test_failures = []
@@ -58,13 +58,14 @@ for file, sample, expected in zip(files, samples, expected):
     prediction = neural_network.predict_samples((sample, expected), synapse0, synapse1)
     if prediction[0][0] >= OSCILLATOR_PREDICTION_THRESHOLD and expected[0] == 0.0:
         test_failures.append((file, expected[0]))
-    if prediction[0][0] < 100 - OSCILLATOR_PREDICTION_THRESHOLD and expected[0] == 1.0:
+    if prediction[0][0] <= 1 - OSCILLATOR_PREDICTION_THRESHOLD and expected[0] == 1.0:
         test_failures.append((file, expected[0]))
 
 print(f"""
     ** Train score **
     Percentage of failures: {(len(train_failures) / len(data_loader.train_set)) * 100}
     Number of failures: {len(train_failures)}
+    Number of tests: {len(data_loader.train_set)}
     List: {train_failures}
 """)
 
@@ -72,5 +73,6 @@ print(f"""
     ** Test score **
     Percentage of failures: {(len(test_failures) / len(data_loader.test_set)) * 100}
     Number of failures: {len(test_failures)}
+    Number of tests: {len(data_loader.test_set)}
     List: {test_failures}
 """)
