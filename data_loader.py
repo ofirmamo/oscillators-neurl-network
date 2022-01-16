@@ -82,20 +82,17 @@ class DataLoader:
             lifeform_matrix = decoder.decode(raw_content)
 
             trimmed_lifeform_matrix = trim_zeros(lifeform_matrix)
-            # lifeform_matrix_augmentations_uniq = self.augment_matrix(trimmed_lifeform_matrix)
-            # lifeform_padded_matrix_augmentations = [self.pad_matrix(matrix) for matrix in
-            #                                        lifeform_matrix_augmentations_uniq]
-            # TODO - Replace Man
-            lifeform_padded_matrix = [self.pad_matrix(matrix) for matrix in
-                                      [trimmed_lifeform_matrix]]
+            lifeform_matrix_augmentations_uniq = self.augment_matrix(trimmed_lifeform_matrix)
+            lifeform_padded_matrix_augmentations = [self.pad_matrix(matrix) for matrix in
+                                                   lifeform_matrix_augmentations_uniq]
             filtered = []
-            for augmentation in lifeform_padded_matrix:
+            for augmentation in lifeform_padded_matrix_augmentations:
                 if any(np.array_equal(matrix, augmentation) for matrix in filtered):
                     continue
                 filtered.append(augmentation)
 
             lifeform_flattened_augmentations = [self.flatten_matrix(matrix) for matrix in
-                                                lifeform_padded_matrix]
+                                                filtered]
 
             return lifeform_flattened_augmentations
 
