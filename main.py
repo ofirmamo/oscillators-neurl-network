@@ -4,20 +4,15 @@ import numpy as np
 import utilities.activation_functions as actf
 from data_loader import DataLoader
 from neural_network import CNNNeuralNetwork
-from utilities.constants import TEST_MODE, TRAIN_MODE, OSCILLATOR_PREDICTION_THRESHOLD
+from utilities.constants import TRAIN_MODE, OSCILLATOR_PREDICTION_THRESHOLD
 
 
-def plot_acc_and_loss(mode, acc, loss):
-    plt.plot(acc)
-    plt.title(mode)
+def plot_acc_and_loss(train_accuracy, test_accuracy):
+    plt.plot(train_accuracy, label="Train Accuracy")
+    plt.plot(test_accuracy, label="Test Accuracy")
     plt.ylabel(f'Accuracy')
     plt.xlabel("Epochs:")
-    plt.show()
-
-    # plotting Loss
-    plt.plot(loss)
-    plt.ylabel('Loss')
-    plt.xlabel("Epochs:")
+    plt.legend()
     plt.show()
 
 
@@ -30,8 +25,7 @@ train_acc, train_loss, test_acc, test_loss, weights = neural_network.train_retur
 # endregion
 
 # region performance plots
-plot_acc_and_loss(TRAIN_MODE, train_acc, train_loss)
-plot_acc_and_loss(TEST_MODE, test_acc, test_loss)
+plot_acc_and_loss(train_acc, test_acc)
 # endregion
 
 # region choose the best accuracy.
