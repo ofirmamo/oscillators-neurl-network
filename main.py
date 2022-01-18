@@ -17,10 +17,10 @@ def plot_acc_and_loss(train_accuracy, test_accuracy):
 
 
 # region training
-neural_network = CNNNeuralNetwork(activation_func=actf.FUNCTIONS[actf.SIGMOID], learning_rate=0.0001)
+neural_network = CNNNeuralNetwork(activation_func=actf.FUNCTIONS[actf.HYPER_TANH], learning_rate=0.00001)
 data_loader = DataLoader()
 
-train_acc, train_loss, test_acc, test_loss, weights = neural_network.train_return_acc_and_loss(epochs=10000,
+train_acc, train_loss, test_acc, test_loss, weights = neural_network.train_return_acc_and_loss(epochs=20000,
                                                                                                print_every=100)
 # endregion
 
@@ -30,7 +30,7 @@ plot_acc_and_loss(train_acc, test_acc)
 
 # region choose the best accuracy.
 print(f"num of epochs until overfit: {(idx_of_max_test_acc := test_acc.index(max(test_acc)))}")
-synapse0, synapse1 = weights[idx_of_max_test_acc]
+synapse0, synapse1, synapse2 = weights[idx_of_max_test_acc]
 
 # endregion
 
@@ -39,7 +39,7 @@ train_failures = []
 files, samples, expected = data_loader.get_samples_with_expected_result(data_loader.train_set)
 for file, sample, expected in zip(files, samples, expected):
     sample = np.reshape(sample, (1, 1024))
-    prediction = neural_network.predict_samples((sample, expected), synapse0, synapse1)
+    prediction = neural_network.predict_samples((sample, expected), synapse0, synapse1, synapse2)
     if prediction[0][0] >= OSCILLATOR_PREDICTION_THRESHOLD and expected[0] == 0.0:
         train_failures.append((file, expected[0]))
     if prediction[0][0] <= 1 - OSCILLATOR_PREDICTION_THRESHOLD and expected[0] == 1.0:
