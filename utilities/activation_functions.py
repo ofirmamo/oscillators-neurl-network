@@ -45,8 +45,8 @@ FUNCTIONS = {
         },
     RELU:
         {
-            FUNC: lambda x: 0 if x <= 0 else x,
-            DERIVATIVE: relu_derivative
+            FUNC: lambda x: np.maximum(x, 0),
+            DERIVATIVE: lambda x: (x > 0) * 1
         },
     SOFTPLUS:
         {

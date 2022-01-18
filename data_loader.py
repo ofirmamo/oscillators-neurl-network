@@ -98,7 +98,9 @@ class DataLoader:
 
     def augment_matrix(self, matrix):
         cur_matrix = matrix
-        return [cur_matrix := np.rot90(cur_matrix) for _ in range(4)]
+        # TODO - restore top remove bottom
+        # return [cur_matrix := np.rot90(cur_matrix) for _ in range(4)]
+        return [cur_matrix]
 
     def pad_matrix(self, matrix):
         return np.pad(matrix, ((0, (BOARD_SIZE - matrix.shape[0])), (0, (BOARD_SIZE - matrix.shape[1]))))

@@ -1,6 +1,7 @@
 from typing import List
 
 import numpy as np
+from scipy.special import softmax
 
 from data_loader import DataLoader
 from utilities.activation_functions import FUNC, DERIVATIVE
@@ -62,19 +63,19 @@ class CNNNeuralNetwork:
         epoch_batch_loss = 0
         for _, batch_samples, batch_expected in data_loader:
             # Feed forward
-            layer_1_output = self.activation_func[FUNC](np.dot(batch_samples, self.synapse_0))
-            batch_prediction = self.activation_func[FUNC](np.dot(layer_1_output, self.synapse_1))
+            layer_1_output = self.activate(np.dot(batch_samples, self.synapse_0))
+            batch_prediction = softmax(np.dot(layer_1_output, self.synapse_1))
 
             # errors
             batch_output_error = batch_expected - batch_prediction
-            batch_output_delta = batch_output_error * self.activation_func[DERIVATIVE](batch_prediction)
+            batch_output_delta = batch_output_error * self.deriv(batch_prediction)
 
             # collect stats
             epoch_batch_loss += np.sum(np.power(batch_output_error, 2))
 
             # Backpropagation
             layer_1_error = batch_output_delta.dot(self.synapse_1.T)
-            layer_1_delta = layer_1_error * self.activation_func[DERIVATIVE](layer_1_output)
+            layer_1_delta = layer_1_error * self.deriv(layer_1_output)
             # update weights (synapses)
             self.synapse_1 += self.learning_rate * layer_1_output.T.dot(batch_output_delta)
             self.synapse_0 += self.learning_rate * batch_prediction.T.dot(layer_1_delta)
@@ -98,7 +99,13 @@ class CNNNeuralNetwork:
 
         _, samples, expected = files_samples_and_expected
         layer_1_output = self.activation_func[FUNC](np.dot(samples, synapse0))
-        results = self.activation_func[FUNC](np.dot(layer_1_output, synapse1))
-        loss = np.sum(np.power(expected - results, 2)) / len(results)
+        results = softmax(np.dot(layer_1_output, synapse1))
+        loss = np.sum(np.power(expected - results, 2)) / (2 * len(results))
         acc = (1 - loss) * 100
         return acc, loss
+
+    def activate(self, x):
+        return self.activation_func[FUNC](x)
+
+    def deriv(self, x):
+        return self.activation_func[DERIVATIVE](x)
