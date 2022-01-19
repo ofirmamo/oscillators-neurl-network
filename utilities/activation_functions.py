@@ -30,7 +30,7 @@ def relu_derivative(x):
 FUNCTIONS = {
     BINARY_STEP:
         {
-            FUNC: lambda x: 0 if x < 0 else 1,
+            FUNC: lambda x: np.where(x < 0, 0, 1),
             DERIVATIVE: lambda x: _derivative_binary_step
         },
     SIGMOID:
@@ -41,11 +41,11 @@ FUNCTIONS = {
     HYPER_TANH:
         {
             FUNC: np.tanh,
-            DERIVATIVE: lambda x: 1 - (np.tanh(x) ** 2)
+            DERIVATIVE: lambda x: 1 - np.power(np.tanh(x), 2)
         },
     RELU:
         {
-            FUNC: lambda x: np.maximum(x, 0),
+            FUNC: lambda x: (relu_ed := np.maximum(x, 0)) / np.sum(relu_ed),
             DERIVATIVE: lambda x: (x > 0) * 1
         },
     SOFTPLUS:
@@ -55,7 +55,7 @@ FUNCTIONS = {
         },
     LEAKY_RELU:
         {
-            FUNC: lambda x: 0.01 * x if x < 0 else x,
-            DERIVATIVE: lambda x: 0.01 if x < 0 else 1
+            FUNC: lambda x: np.where(x > 0, x, x * 0.01),
+            DERIVATIVE: lambda x: np.where(x < 0, 0.01, x)
         }
 }

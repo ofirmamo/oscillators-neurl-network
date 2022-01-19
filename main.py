@@ -7,12 +7,13 @@ from neural_network import CNNNeuralNetwork
 from utilities.constants import TRAIN_MODE, OSCILLATOR_PREDICTION_THRESHOLD
 
 
-def plot_acc_and_loss(train_accuracy, test_accuracy):
+def plot_acc_and_loss(train_accuracy, test_accuracy, epoch_of_best_test_acc):
     plt.plot(train_accuracy, label="Train Accuracy")
     plt.plot(test_accuracy, label="Test Accuracy")
     plt.ylabel(f'Accuracy')
     plt.xlabel("Epochs:")
     plt.legend()
+    plt.axvline(x=epoch_of_best_test_acc, color="gray")
     plt.show()
 
 
@@ -20,20 +21,23 @@ def plot_acc_and_loss(train_accuracy, test_accuracy):
 neural_network = CNNNeuralNetwork(activation_func=actf.FUNCTIONS[actf.HYPER_TANH], learning_rate=0.00001)
 data_loader = DataLoader()
 
-train_acc, train_loss, test_acc, test_loss, weights = neural_network.train_return_acc_and_loss(epochs=20000,
-                                                                                               print_every=100)
+(train_acc, train_loss,
+ test_acc, test_loss,
+ weights) = neural_network.train_return_acc_and_loss(epochs=10000, print_every=100)
+# endregion
+
+
+# region best accuracy.
+print(f"num of epochs until overfit: {(epoch_of_max_test_acc := test_acc.index(max(test_acc)))}")
+synapse0, synapse1, synapse2 = weights[epoch_of_max_test_acc]
 # endregion
 
 # region performance plots
-plot_acc_and_loss(train_acc, test_acc)
+plot_acc_and_loss(train_acc, test_acc, epoch_of_max_test_acc)
 # endregion
 
-# region choose the best accuracy.
-print(f"num of epochs until overfit: {(idx_of_max_test_acc := test_acc.index(max(test_acc)))}")
-synapse0, synapse1, synapse2 = weights[idx_of_max_test_acc]
 
-# endregion
-
+# region failures
 train_failures = []
 
 files, samples, expected = data_loader.get_samples_with_expected_result(data_loader.train_set)
@@ -70,3 +74,4 @@ print(f"""
     Number of tests: {len(data_loader.test_set)}
     List: {test_failures}
 """)
+# endregion failures
