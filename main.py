@@ -4,7 +4,7 @@ import numpy as np
 import utilities.activation_functions as actf
 from data_loader import DataLoader
 from neural_network import CNNNeuralNetwork
-from utilities.constants import TRAIN_MODE, OSCILLATOR_PREDICTION_THRESHOLD
+from utilities.constants import OSCILLATOR_PREDICTION_THRESHOLD
 
 
 def plot_acc_and_loss(train_accuracy, test_accuracy, epoch_of_best_test_acc):
@@ -18,12 +18,12 @@ def plot_acc_and_loss(train_accuracy, test_accuracy, epoch_of_best_test_acc):
 
 
 # region training
-neural_network = CNNNeuralNetwork(activation_func=actf.FUNCTIONS[actf.HYPER_TANH], learning_rate=0.00001)
+neural_network = CNNNeuralNetwork(activation_func=actf.FUNCTIONS[actf.SIGMOID], learning_rate=0.0001)
 data_loader = DataLoader()
 
 (train_acc, train_loss,
  test_acc, test_loss,
- weights) = neural_network.train_return_acc_and_loss(epochs=10000, print_every=100)
+ weights) = neural_network.train_return_acc_and_loss(epochs=12000, print_every=100)
 # endregion
 
 
