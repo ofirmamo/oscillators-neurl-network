@@ -24,11 +24,13 @@ class DataLoader:
         self.non_oscillators_learning_samples_with_expected = []
 
         for file_path in self.INPUT_OSCILLATOR_FILES:
-            self.oscillators_learning_samples_with_expected += [(file_path, loaded_input, np.ones((1,))) for loaded_input in
+            self.oscillators_learning_samples_with_expected += [(file_path, loaded_input, np.ones((1,))) for
+                                                                loaded_input in
                                                                 self.load_inputs(file_path)]
 
         for file_path in self.INPUT_NON_OSCILLATOR_FILES:
-            self.non_oscillators_learning_samples_with_expected += [(file_path, loaded_input, np.zeros((1,))) for loaded_input in
+            self.non_oscillators_learning_samples_with_expected += [(file_path, loaded_input, np.zeros((1,))) for
+                                                                    loaded_input in
                                                                     self.load_inputs(file_path)]
 
         self.mode = TRAIN_MODE
@@ -84,7 +86,7 @@ class DataLoader:
             trimmed_lifeform_matrix = trim_zeros(lifeform_matrix)
             lifeform_matrix_augmentations_uniq = self.augment_matrix(trimmed_lifeform_matrix)
             lifeform_padded_matrix_augmentations = [self.pad_matrix(matrix) for matrix in
-                                                   lifeform_matrix_augmentations_uniq]
+                                                    lifeform_matrix_augmentations_uniq]
             filtered = []
             for augmentation in lifeform_padded_matrix_augmentations:
                 if any(np.array_equal(matrix, augmentation) for matrix in filtered):
@@ -98,7 +100,10 @@ class DataLoader:
 
     def augment_matrix(self, matrix):
         cur_matrix = matrix
-        return [cur_matrix := np.rot90(cur_matrix) for _ in range(4)]
+        if AUGMENTATIONS:
+            return [cur_matrix := np.rot90(cur_matrix) for _ in range(4)]
+        else:
+            return [cur_matrix]
 
     def pad_matrix(self, matrix):
         return np.pad(matrix, ((0, (BOARD_SIZE - matrix.shape[0])), (0, (BOARD_SIZE - matrix.shape[1]))))

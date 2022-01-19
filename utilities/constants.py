@@ -4,6 +4,7 @@ BOARD_SHAPE = (BOARD_SIZE, BOARD_SIZE)
 # endregion
 
 # region neural network
+AUGMENTATIONS=True
 TRAIN_MODE = "Train"
 TEST_MODE = "Test"
 RANDOM_SEED = 1
