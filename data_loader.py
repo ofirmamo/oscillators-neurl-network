@@ -1,7 +1,6 @@
 import random
 
 import lifeforms_gen.rle_decoder as decoder
-from utilities.constants import *
 from utilities.paths import *
 from utilities.utilities import *
 
@@ -85,7 +84,7 @@ class DataLoader:
 
             trimmed_lifeform_matrix = trim_zeros(lifeform_matrix)
             lifeform_matrix_augmentations_uniq = self.augment_matrix(trimmed_lifeform_matrix)
-            lifeform_padded_matrix_augmentations = [self.pad_matrix(matrix) for matrix in
+            lifeform_padded_matrix_augmentations = [pad_matrix(matrix) for matrix in
                                                     lifeform_matrix_augmentations_uniq]
             filtered = []
             for augmentation in lifeform_padded_matrix_augmentations:
@@ -93,7 +92,7 @@ class DataLoader:
                     continue
                 filtered.append(augmentation)
 
-            lifeform_flattened_augmentations = [self.flatten_matrix(matrix) for matrix in
+            lifeform_flattened_augmentations = [flatten_matrix(matrix) for matrix in
                                                 filtered]
 
             return lifeform_flattened_augmentations
@@ -104,12 +103,6 @@ class DataLoader:
             return [cur_matrix := np.rot90(cur_matrix) for _ in range(4)]
         else:
             return [cur_matrix]
-
-    def pad_matrix(self, matrix):
-        return np.pad(matrix, ((0, (BOARD_SIZE - matrix.shape[0])), (0, (BOARD_SIZE - matrix.shape[1]))))
-
-    def flatten_matrix(self, matrix):
-        return np.hstack(matrix)
 
     def __iter__(self):
         return self
