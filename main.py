@@ -6,14 +6,19 @@ from data_loader import DataLoader
 from neural_network import CNNNeuralNetwork
 from utilities.constants import *
 
+data_loader = DataLoader()
+
 TITLE = f"Sigmoid - {'with' if AUGMENTATIONS else 'no'} Augmentations"
+
+
+# TITLE = f"Sigmoid - {int(BATCH_SIZE * len(data_loader))} Batch Size"
 
 
 def plot_acc_and_loss(train_accuracy, test_accuracy, epoch_of_best_test_acc):
     plt.title(TITLE)
     plt.plot(train_accuracy, label="Train Loss")
     plt.plot(test_accuracy, label="Test Loss")
-    plt.ylabel(f'Loss')
+    plt.ylabel("Loss")
     plt.xlabel("Epochs")
     plt.legend()
     plt.axvline(x=epoch_of_best_test_acc, color="gray")
@@ -21,8 +26,10 @@ def plot_acc_and_loss(train_accuracy, test_accuracy, epoch_of_best_test_acc):
 
 
 # region training
-neural_network = CNNNeuralNetwork(activation_func=actf.FUNCTIONS[actf.SIGMOID], learning_rate=0.0001)
-data_loader = DataLoader()
+neural_network = \
+    CNNNeuralNetwork(
+        activation_func=actf.FUNCTIONS[actf.SIGMOID],
+        learning_rate=0.0005)
 
 (train_acc, train_loss,
  test_acc, test_loss,
@@ -41,40 +48,40 @@ plot_acc_and_loss(train_loss, test_loss, epoch_of_max_test_acc)
 
 
 # # region failures
-train_failures = []
-
-files, samples, expected = data_loader.get_samples_with_expected_result(data_loader.train_set)
-for file, sample, expected in zip(files, samples, expected):
-    sample = np.reshape(sample, (1, 1024))
-    prediction = neural_network.predict_samples((sample, expected), synapse0, synapse1, synapse2)
-    if prediction[0][0] >= OSCILLATOR_PREDICTION_THRESHOLD and expected[0] == 0.0:
-        train_failures.append((file, expected[0]))
-    if prediction[0][0] <= 1 - OSCILLATOR_PREDICTION_THRESHOLD and expected[0] == 1.0:
-        train_failures.append((file, expected[0]))
-
-test_failures = []
-files, samples, expected = data_loader.get_samples_with_expected_result(data_loader.test_set)
-for file, sample, expected in zip(files, samples, expected):
-    sample = np.reshape(sample, (1, 1024))
-    prediction = neural_network.predict_samples((sample, expected), synapse0, synapse1)
-    if prediction[0][0] >= OSCILLATOR_PREDICTION_THRESHOLD and expected[0] == 0.0:
-        test_failures.append((file, expected[0]))
-    if prediction[0][0] <= 1 - OSCILLATOR_PREDICTION_THRESHOLD and expected[0] == 1.0:
-        test_failures.append((file, expected[0]))
-
-print(f"""
-    ** Train score **
-    Percentage of failures: {(len(train_failures) / len(data_loader.train_set)) * 100}
-    Number of failures: {len(train_failures)}
-    Number of tests: {len(data_loader.train_set)}
-    List: {train_failures}
-""")
-
-print(f"""
-    ** Test score **
-    Percentage of failures: {(len(test_failures) / len(data_loader.test_set)) * 100}
-    Number of failures: {len(test_failures)}
-    Number of tests: {len(data_loader.test_set)}
-    List: {test_failures}
-""")
+# train_failures = []
+#
+# files, samples, expected = data_loader.get_samples_with_expected_result(data_loader.train_set)
+# for file, sample, expected in zip(files, samples, expected):
+#     sample = np.reshape(sample, (1, 1024))
+#     _, prediction = neural_network.predict((file, sample, expected), synapse0, synapse1, synapse2)
+#     if prediction[0][0] >= OSCILLATOR_PREDICTION_THRESHOLD and expected[0] == 0.0:
+#         train_failures.append((file, expected[0]))
+#     if prediction[0][0] <= 1 - OSCILLATOR_PREDICTION_THRESHOLD and expected[0] == 1.0:
+#         train_failures.append((file, expected[0]))
+#
+# test_failures = []
+# files, samples, expected = data_loader.get_samples_with_expected_result(data_loader.test_set)
+# for file, sample, expected in zip(files, samples, expected):
+#     sample = np.reshape(sample, (1, 1024))
+#     _, prediction = neural_network.predict((file, sample, expected), synapse0, synapse1)
+#     if prediction[0][0] >= OSCILLATOR_PREDICTION_THRESHOLD and expected[0] == 0.0:
+#         test_failures.append((file, expected[0]))
+#     if prediction[0][0] <= 1 - OSCILLATOR_PREDICTION_THRESHOLD and expected[0] == 1.0:
+#         test_failures.append((file, expected[0]))
+#
+# print(f"""
+#     ** Train score **
+#     Percentage of failures: {(len(train_failures) / len(data_loader.train_set)) * 100}
+#     Number of failures: {len(train_failures)}
+#     Number of tests: {len(data_loader.train_set)}
+#     List: {train_failures}
+# """)
+#
+# print(f"""
+#     ** Test score **
+#     Percentage of failures: {(len(test_failures) / len(data_loader.test_set)) * 100}
+#     Number of failures: {len(test_failures)}
+#     Number of tests: {len(data_loader.test_set)}
+#     List: {test_failures}
+# """)
 # # endregion failures

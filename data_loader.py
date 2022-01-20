@@ -1,6 +1,6 @@
 import random
 
-import lifeforms_gen.rle_decoder as decoder
+import rle_decoder as decoder
 from utilities.paths import *
 from utilities.utilities import *
 
@@ -8,10 +8,12 @@ from utilities.utilities import *
 class DataLoader:
     """
     1. Load + Parse Data
-    2. Augment Data
-    4. Flatten
-    4. generate batching (generator of batches)
-    5.
+    2. Trim
+    3. Augment Data
+    4. Padding
+    5. Filter Unique
+    6. Flatten
+    7. Generate batching (generator of batches)
     """
     INPUT_OSCILLATOR_FILES = [os.path.join(OSCILLATORS_PATH, file_name) for file_name in os.listdir(OSCILLATORS_PATH)]
     INPUT_NON_OSCILLATOR_FILES = [os.path.join(NON_OSCILLATORS_PATH, file_name) for file_name in
@@ -23,79 +25,85 @@ class DataLoader:
         self.non_oscillators_learning_samples_with_expected = []
 
         for file_path in self.INPUT_OSCILLATOR_FILES:
-            self.oscillators_learning_samples_with_expected += [(file_path, loaded_input, np.ones((1,))) for
-                                                                loaded_input in
-                                                                self.load_inputs(file_path)]
+            self.oscillators_learning_samples_with_expected += [
+                (file_path, loaded_input, np.ones((1,))) for
+                loaded_input in
+                self.load_inputs(file_path)
+            ]
 
         for file_path in self.INPUT_NON_OSCILLATOR_FILES:
-            self.non_oscillators_learning_samples_with_expected += [(file_path, loaded_input, np.zeros((1,))) for
-                                                                    loaded_input in
-                                                                    self.load_inputs(file_path)]
-
-        self.mode = TRAIN_MODE
+            self.non_oscillators_learning_samples_with_expected += [
+                (file_path, loaded_input, np.zeros((1,))) for
+                loaded_input in
+                self.load_inputs(file_path)
+            ]
 
         def train_test_split():
             random.seed(RANDOM_SEED)
 
-            pick_percent = lambda working_set: set(random.sample(list(range(len(working_set))),
-                                                                 int(len(working_set) * 0.7)))
+            pick_percent = lambda working_set: set(
+                random.sample(
+                    list(range(len(working_set))),
+                    int(len(working_set) * 0.7)))
             pick_rest = lambda origin, picked: set(range(len(origin))) - picked
 
             oscillators_train_set_ids = pick_percent(self.oscillators_learning_samples_with_expected)
-            nonoscillators_train_set_ids = pick_percent(self.non_oscillators_learning_samples_with_expected)
+            non_oscillators_train_set_ids = pick_percent(self.non_oscillators_learning_samples_with_expected)
+            oscillators_test_set_ids = pick_rest(
+                self.oscillators_learning_samples_with_expected,
+                oscillators_train_set_ids)
+            non_oscillators_test_set_ids = pick_rest(
+                self.non_oscillators_learning_samples_with_expected,
+                non_oscillators_train_set_ids)
 
-            oscillators_test_set_ids = pick_rest(self.oscillators_learning_samples_with_expected,
-                                                 oscillators_train_set_ids)
-            nonoscillators_test_set_ids = pick_rest(self.non_oscillators_learning_samples_with_expected,
-                                                    nonoscillators_train_set_ids)
-
-            train_set = [lst[idx] for indices, lst in
-                         [(oscillators_train_set_ids, self.oscillators_learning_samples_with_expected),
-                          (nonoscillators_train_set_ids, self.non_oscillators_learning_samples_with_expected)] for idx
-                         in indices]
-            test_set = [lst[idx] for indices, lst in
-                        [(oscillators_test_set_ids, self.oscillators_learning_samples_with_expected),
-                         (nonoscillators_test_set_ids, self.non_oscillators_learning_samples_with_expected)] for idx in
-                        indices]
+            train_set = [
+                lst[idx] for indices, lst in
+                [
+                    (oscillators_train_set_ids, self.oscillators_learning_samples_with_expected),
+                    (non_oscillators_train_set_ids, self.non_oscillators_learning_samples_with_expected)
+                ] for idx in indices
+            ]
+            test_set = [
+                lst[idx] for indices, lst in
+                [
+                    (oscillators_test_set_ids, self.oscillators_learning_samples_with_expected),
+                    (non_oscillators_test_set_ids, self.non_oscillators_learning_samples_with_expected)
+                ] for idx in indices
+            ]
             random.shuffle(train_set)
             random.shuffle(test_set)
 
             return train_set, test_set
 
         self.train_set, self.test_set = train_test_split()
-
         self.working_set = self.train_set
+        self.batch_size = int(len(self.working_set) * BATCH_SIZE)
 
-        self.batch_size = len(self.working_set)
-
-    def change_mode(self, mode):
-        self.mode = mode
-        self.working_set = self.train_set if mode == TRAIN_MODE else self.test_set
-        self.batch_size = len(self.working_set)
-        self.idx = 0
-
-    def __len__(self, mode=None):
-        return len(self.working_set) if not mode else len(self.train_set) if mode == TRAIN_MODE else len(self.test_set)
+    def __len__(self):
+        return len(self.working_set)
 
     def load_inputs(self, file_path):
         with open(file_path) as file:
             raw_content = file.read()
-            lifeform_matrix = decoder.decode(raw_content)
+            life_form_matrix = decoder.decode(raw_content)
 
-            trimmed_lifeform_matrix = trim_zeros(lifeform_matrix)
-            lifeform_matrix_augmentations_uniq = self.augment_matrix(trimmed_lifeform_matrix)
-            lifeform_padded_matrix_augmentations = [pad_matrix(matrix) for matrix in
-                                                    lifeform_matrix_augmentations_uniq]
+            trimmed_life_form_matrix = trim_zeros(life_form_matrix)
+            life_form_matrix_augmentations = self.augment_matrix(trimmed_life_form_matrix)
+            life_form_padded_matrix_augmentations = [
+                pad_matrix(matrix) for matrix in life_form_matrix_augmentations
+            ]
+
             filtered = []
-            for augmentation in lifeform_padded_matrix_augmentations:
+            for augmentation in life_form_padded_matrix_augmentations:
                 if any(np.array_equal(matrix, augmentation) for matrix in filtered):
                     continue
                 filtered.append(augmentation)
 
-            lifeform_flattened_augmentations = [flatten_matrix(matrix) for matrix in
-                                                filtered]
+            life_form_flattened_augmentations = [
+                flatten_matrix(matrix) for matrix in filtered
+            ]
 
-            return lifeform_flattened_augmentations
+            return life_form_flattened_augmentations
 
     def augment_matrix(self, matrix):
         cur_matrix = matrix
