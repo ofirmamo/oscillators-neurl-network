@@ -29,7 +29,7 @@ def plot_acc_and_loss(train_accuracy, test_accuracy, epoch_of_best_test_acc):
 neural_network = \
     CNNNeuralNetwork(
         activation_func=actf.FUNCTIONS[actf.SIGMOID],
-        learning_rate=0.0005)
+        learning_rate=0.0001)
 
 (train_acc, train_loss,
  test_acc, test_loss,
