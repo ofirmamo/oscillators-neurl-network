@@ -1,4 +1,3 @@
-import numpy as np
 import matplotlib.pyplot as plt
 
 import utilities.activation_functions as actf
@@ -9,8 +8,6 @@ from utilities.constants import *
 data_loader = DataLoader()
 
 TITLE = f"Sigmoid - {'with' if AUGMENTATIONS else 'no'} Augmentations"
-
-
 # TITLE = f"Sigmoid - {int(BATCH_SIZE * len(data_loader))} Batch Size"
 
 
@@ -45,43 +42,3 @@ synapse0, synapse1, synapse2 = weights[epoch_of_max_test_acc]
 # region performance plots
 plot_acc_and_loss(train_loss, test_loss, epoch_of_max_test_acc)
 # endregion
-
-
-# # region failures
-# train_failures = []
-#
-# files, samples, expected = data_loader.get_samples_with_expected_result(data_loader.train_set)
-# for file, sample, expected in zip(files, samples, expected):
-#     sample = np.reshape(sample, (1, 1024))
-#     _, prediction = neural_network.predict((file, sample, expected), synapse0, synapse1, synapse2)
-#     if prediction[0][0] >= OSCILLATOR_PREDICTION_THRESHOLD and expected[0] == 0.0:
-#         train_failures.append((file, expected[0]))
-#     if prediction[0][0] <= 1 - OSCILLATOR_PREDICTION_THRESHOLD and expected[0] == 1.0:
-#         train_failures.append((file, expected[0]))
-#
-# test_failures = []
-# files, samples, expected = data_loader.get_samples_with_expected_result(data_loader.test_set)
-# for file, sample, expected in zip(files, samples, expected):
-#     sample = np.reshape(sample, (1, 1024))
-#     _, prediction = neural_network.predict((file, sample, expected), synapse0, synapse1)
-#     if prediction[0][0] >= OSCILLATOR_PREDICTION_THRESHOLD and expected[0] == 0.0:
-#         test_failures.append((file, expected[0]))
-#     if prediction[0][0] <= 1 - OSCILLATOR_PREDICTION_THRESHOLD and expected[0] == 1.0:
-#         test_failures.append((file, expected[0]))
-#
-# print(f"""
-#     ** Train score **
-#     Percentage of failures: {(len(train_failures) / len(data_loader.train_set)) * 100}
-#     Number of failures: {len(train_failures)}
-#     Number of tests: {len(data_loader.train_set)}
-#     List: {train_failures}
-# """)
-#
-# print(f"""
-#     ** Test score **
-#     Percentage of failures: {(len(test_failures) / len(data_loader.test_set)) * 100}
-#     Number of failures: {len(test_failures)}
-#     Number of tests: {len(data_loader.test_set)}
-#     List: {test_failures}
-# """)
-# # endregion failures

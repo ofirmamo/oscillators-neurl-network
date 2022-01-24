@@ -1,6 +1,6 @@
 import numpy as np
 
-from utilities.constants import *
+from utilities.constants import BOARD_SIZE
 
 
 def pad_matrix(matrix):

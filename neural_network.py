@@ -1,8 +1,8 @@
 import numpy as np
 
-from utilities.activation_functions import sigmoid
 from data_loader import DataLoader
 from utilities.activation_functions import FUNC, DERIVATIVE
+from utilities.activation_functions import sigmoid
 from utilities.constants import *
 
 
@@ -25,6 +25,36 @@ class CNNNeuralNetwork:
         self.synapse_0 = 2 * np.random.random((WIDTH_LAYER_1, WIDTH_LAYER_2)) - 1
         self.synapse_1 = 2 * np.random.random((WIDTH_LAYER_2, WIDTH_LAYER_3)) - 1
         self.synapse_2 = 2 * np.random.random((WIDTH_LAYER_3, 1)) - 1
+
+    def run_epoch(self, data_loader: DataLoader):
+        activate, derivative = self.activate, self.derivative
+
+        epoch_batch_loss = 0
+        for _filename, batch_samples, batch_expected in data_loader:
+            # Feed forward
+            layer_1_output = activate(np.dot(batch_samples, self.synapse_0))
+            layer_2_output = activate(np.dot(layer_1_output, self.synapse_1))
+            batch_prediction = sigmoid(np.dot(layer_2_output, self.synapse_2))  # logistic sigmoid
+
+            # errors
+            batch_output_error = batch_expected - batch_prediction
+
+            # collect stats
+            epoch_batch_loss += np.sum(np.power(batch_output_error, 2))
+
+            # Backpropagation
+            batch_output_delta = batch_output_error * derivative(batch_prediction)
+            layer_2_error = batch_output_delta.dot(self.synapse_2.T)
+            layer_2_delta = layer_2_error * derivative(layer_2_output)
+            layer_1_error = layer_2_delta.dot(self.synapse_1.T)
+            layer_1_delta = layer_1_error * derivative(layer_1_output)
+            # update weights (synapses)
+            self.synapse_2 += self.learning_rate * layer_2_output.T.dot(batch_output_delta)
+            self.synapse_1 += self.learning_rate * layer_1_output.T.dot(layer_2_delta)
+            self.synapse_0 += self.learning_rate * batch_prediction.T.dot(layer_1_delta)
+
+        # for stats
+        return epoch_batch_loss
 
     def train_return_acc_and_loss(self, epochs, print_every=25):
         data_loader = DataLoader()
@@ -55,37 +85,6 @@ class CNNNeuralNetwork:
             loss.append(half_avg_epoch_loss)
 
         return acc, loss, test_acc, test_loss, weights
-
-    def run_epoch(self, data_loader: DataLoader):
-        activate, derivative = self.activate, self.derivative
-
-        epoch_batch_loss = 0
-        for _filename, batch_samples, batch_expected in data_loader:
-            # Feed forward
-            layer_1_output = activate(np.dot(batch_samples, self.synapse_0))
-            layer_2_output = activate(np.dot(layer_1_output, self.synapse_1))
-            batch_output = np.dot(layer_2_output, self.synapse_2)
-            batch_prediction = sigmoid(batch_output)  # logistic sigmoid
-
-            # errors
-            batch_output_error = batch_expected - batch_prediction
-            batch_output_delta = batch_output_error * derivative(batch_prediction)
-
-            # collect stats
-            epoch_batch_loss += np.sum(np.power(batch_output_error, 2))
-
-            # Backpropagation
-            layer_2_error = batch_output_delta.dot(self.synapse_2.T)
-            layer_2_delta = layer_2_error * derivative(layer_2_output)
-            layer_1_error = layer_2_delta.dot(self.synapse_1.T)
-            layer_1_delta = layer_1_error * derivative(layer_1_output)
-            # update weights (synapses)
-            self.synapse_2 += self.learning_rate * layer_2_output.T.dot(batch_output_delta)
-            self.synapse_1 += self.learning_rate * layer_1_output.T.dot(layer_2_delta)
-            self.synapse_0 += self.learning_rate * batch_prediction.T.dot(layer_1_delta)
-
-        # for stats
-        return epoch_batch_loss
 
     def predict_samples_return_acc_and_loss(self, files_samples_and_expected, synapse0=None, synapse1=None,
                                             synapse2=None):

@@ -1,7 +1,7 @@
 import random
 
-import rle_decoder as decoder
-from utilities.paths import *
+import utilities.preprocessing.rle_decoder as decoder
+from utilities.constants import *
 from utilities.utilities import *
 
 
